@@ -1,2 +1,0 @@
-# Wedding
-Wedding invitation
