@@ -13,7 +13,6 @@
   <title>김태형 ♥ 이채연 결혼합니다</title>
   <link rel="stylesheet" href="./app.css?v=2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.min.js"></script>
-  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js" integrity="sha384-OL+ylM/iuPLtW5U3XcvLSGhE8JzReKDank5InqlHGWPhb4140/yrBw0bg0y7+C9J" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="loading" class="loading">청첩장을 불러오는 중입니다.</div>
@@ -34,10 +33,10 @@
 
   <section class="section guestbook"><div class="eyebrow">GUESTBOOK</div><h2>방명록</h2><form id="guestForm" class="form"><label>성함<input name="name" required maxlength="50"></label><label>축하 메시지<textarea name="message" required maxlength="500"></textarea></label><button id="guestSubmit" class="primary" type="submit">방명록 남기기</button><div id="guestStatus" class="status"></div></form><div class="guestWall"><div class="guestWallHead"><div><small>FROM OUR GUESTS</small><strong>하객들이 남긴 축하 메시지</strong></div><span id="guestCount" class="guestCount"></span></div><div id="guestList" class="guestList"></div><button id="guestMore" class="guestMore hidden" type="button"></button></div></section>
 
-  <footer><p>소중한 날,<br>함께해 주세요.</p><div class="shareActions"><button id="kakaoShareBtn" class="kakaoShare" type="button">💬 카카오톡으로 공유하기</button><button id="copyShareBtn" class="copyShare" type="button">링크 복사</button></div></footer>
+  <footer><p>소중한 날,<br>함께해 주세요.</p><div class="shareActions"><button id="copyShareBtn" class="copyShare" type="button">링크 복사</button></div></footer>
 </main>
 
 <div id="lightbox" class="lightbox"><button id="lightboxClose" type="button">×</button><img id="lightboxImage" alt="확대 사진"></div><div id="toast" class="toast"></div>
-<script src="./app.js?v=2"></script>
+<script src="./app.js?v=3"></script>
 </body>
 </html>
