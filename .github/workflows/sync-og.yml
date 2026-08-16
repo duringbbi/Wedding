@@ -1,6 +1,9 @@
 name: Sync Wedding OG Metadata
 
 on:
+  push:
+    paths:
+      - '.github/workflows/sync-og.yml'
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
