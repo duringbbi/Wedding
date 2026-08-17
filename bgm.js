@@ -27,7 +27,15 @@ function apply(){
   audio.loop=w.bgm_loop!==false;audio.volume=clamp(Number(w.bgm_volume??D.volume),0,1);
   btn.onclick=()=>audio.paused?play(true):audio.pause();audio.onplay=sync;audio.onpause=sync;audio.onended=sync;sync();
   if(w.bgm_autoplay!==false&&!window.__bgmAutoplayTried){window.__bgmAutoplayTried=true;setTimeout(()=>play(false),350)}
-  if(w.bgm_autoplay!==false&&!window.__bgmGestureBound){window.__bgmGestureBound=true;const resume=()=>{if(audio.paused)play(false);['pointerdown','touchstart','keydown'].forEach(ev=>window.removeEventListener(ev,resume));};['pointerdown','touchstart','keydown'].forEach(ev=>window.addEventListener(ev,resume,{once:true}));}
+  if(w.bgm_autoplay!==false&&!window.__bgmGestureBound){
+    window.__bgmGestureBound=true;
+    const resume=e=>{
+      if(e?.target?.closest?.('#bgmToggle'))return;
+      if(audio.paused)play(false);
+      ['pointerdown','touchstart','keydown'].forEach(ev=>window.removeEventListener(ev,resume));
+    };
+    ['pointerdown','touchstart','keydown'].forEach(ev=>window.addEventListener(ev,resume));
+  }
   return true;
 }
 ensureUI();let tries=0;const timer=setInterval(()=>{if(apply()||++tries>120)clearInterval(timer)},100);
