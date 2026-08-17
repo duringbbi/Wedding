@@ -1,1 +1,32 @@
-(()=>{const LOVE_PATH='M0 45 L0 44 L4 41 M5 40 L6 37 L13 29 L28 5 M5 41 L6 42 L10 42 L11 41 L17 41 L18 42 L22 42 L23 41 L79 41 L80 42 L90 41 L91 42 L109 43 L110 44 L116 44 L121 46 L126 46 L147 53 M134 21 L132 21 L129 24 L127 30 L128 33 L132 36 L137 36 L142 34 L144 31 M135 20 L136 10 L141 5 L144 5 M147 29 L150 25 L154 15 L154 8 L152 5 L150 5 M135 21 L144 29 M147 30 L151 32 L164 34 L165 35 L176 35 L177 34 L187 33 L200 29 L213 23 L215 21 L220 20 M222 20 L225 16 M221 21 L221 24 L218 29 L214 43 L216 48 L222 49 L227 47 L241 34 M243 30 L247 28 L249 24 L259 12 L261 7 L264 5 M241 30 L240 29 L240 19 L243 13 L243 11 L247 5 M242 34 L248 40 L252 42 L259 44 L265 44 L266 45 L276 46 L277 45 L283 45 L284 44 L294 43 L305 39 L310 36 L312 36 L314 34 L319 33 M320 33 L325 29 M325 29 L327 31 L330 31 L331 30 L339 29 L343 27 L349 26 L351 24 L356 22 L362 16 L362 9 L359 6 L350 6 L343 9 L329 22 M320 34 L319 43 L321 48 L328 54 L335 56 L360 56 L366 54 L371 54 L375 52 L378 52 L387 49 L395 45';const D={top:-18,left:-6,width:112,duration:3.4};const n=(v,d)=>Number.isFinite(Number(v))?Number(v):d;function shape(){const svg=document.querySelector('.heroHandwriting svg'),ink=document.querySelector('.heroInk');if(!svg||!ink)return false;svg.setAttribute('viewBox','0 0 410 100');ink.setAttribute('d',LOVE_PATH);return true}function apply(){shape();if(typeof w==='undefined'||!w)return false;const el=document.querySelector('.heroHandwriting'),ink=document.querySelector('.heroInk');if(!el||!ink)return false;el.style.display=w.hero_effect_enabled===false?'none':'block';el.style.top=n(w.hero_effect_top_px,D.top)+'px';el.style.left=n(w.hero_effect_left_pct,D.left)+'%';el.style.width=n(w.hero_effect_width_pct,D.width)+'%';ink.style.animationDuration=n(w.hero_effect_duration_s,D.duration)+'s';return true}shape();let tries=0;const t=setInterval(()=>{if(apply()||++tries>100)clearInterval(t)},100);})();
+(()=>{
+const STROKES=[
+  'M28 5 C22 16 14 30 5 41 C38 40 76 40 110 43 C123 45 136 49 147 53',
+  'M147 53 C139 47 132 40 130 32 C127 23 132 16 140 13 C148 10 154 15 154 23 C154 31 148 36 141 36 C135 36 131 32 132 27 C136 31 143 31 151 30 C164 34 178 35 190 32 C202 29 212 24 220 20',
+  'M220 20 C218 29 212 43 216 48 C220 53 226 48 232 40 C243 27 254 12 264 5 C258 17 249 29 241 34 C244 38 250 42 258 44 C278 48 300 42 319 33',
+  'M319 33 C329 27 342 24 352 19 C361 15 365 9 361 6 C356 2 347 5 339 12 C330 20 322 29 320 37 C317 47 324 54 335 56 C352 59 374 54 395 45'
+];
+const D={top:-18,left:-6,width:112,duration:3.4};
+const n=(v,d)=>Number.isFinite(Number(v))?Number(v):d;
+function shape(){
+  const svg=document.querySelector('.heroHandwriting svg');
+  if(!svg)return false;
+  svg.setAttribute('viewBox','0 0 410 100');
+  svg.innerHTML=STROKES.map((d,i)=>`<path class="heroInk heroInk${i+1}" pathLength="1" d="${d}"/>`).join('');
+  return true;
+}
+function apply(){
+  shape();
+  if(typeof w==='undefined'||!w)return false;
+  const el=document.querySelector('.heroHandwriting');
+  if(!el)return false;
+  el.style.display=w.hero_effect_enabled===false?'none':'block';
+  el.style.top=n(w.hero_effect_top_px,D.top)+'px';
+  el.style.left=n(w.hero_effect_left_pct,D.left)+'%';
+  el.style.width=n(w.hero_effect_width_pct,D.width)+'%';
+  el.style.setProperty('--hero-duration',n(w.hero_effect_duration_s,D.duration)+'s');
+  return true;
+}
+shape();
+let tries=0;
+const t=setInterval(()=>{if(apply()||++tries>100)clearInterval(t)},100);
+})();
