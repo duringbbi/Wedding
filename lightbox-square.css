@@ -1,0 +1,2 @@
+.lightbox img{border-radius:0!important}
+@media(max-width:480px){.lightbox img{border-radius:0!important}}
