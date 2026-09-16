@@ -17,6 +17,6 @@ function addScript(src){return new Promise((resolve,reject)=>{const s=document.c
   new Function(src)();
   await addScript('./hero-settings.js?v=3');
   await addScript('./interaction-enhancements.js?v=2');
-  await addScript('./bgm.js?v=3');
+  await addScript('./bgm.js?v=4');
 })().catch(e=>{console.error(e);const loading=document.getElementById('loading');if(loading)loading.textContent='청첩장을 불러오지 못했습니다.'});
 })();
