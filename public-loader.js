@@ -11,8 +11,9 @@ function addScript(src){return new Promise((resolve,reject)=>{const s=document.c
   src=src.replace("const SHARE_URL='https://duringbbi.github.io/Wedding/';",`const SHARE_URL=${JSON.stringify(shareUrl)};`);
   src=src.replace("const SLUG='taehyung-chaeyeon';",`const SLUG=${JSON.stringify(slug)};`);
   src=src.replace("const sb=supabase.createClient", "var sb=window.sb=supabase.createClient");
-  src=src.replace("let w=null,gallery=[]", "var w=window.w=null,gallery=[]");
+  src=src.replace("let w=null,gallery=[]", "var w=window.w=null,gallery=window.gallery=[]");
   src=src.replace("if(wr.error)throw wr.error;w=wr.data;", "if(wr.error)throw wr.error;w=window.w=wr.data;");
+  src=src.replace("gallery=gr.data||[];", "if(gr.error)throw gr.error;gallery=window.gallery=gr.data||[];");
   src+='\nwindow.toast=toast;';
   new Function(src)();
   await addScript('./hero-settings.js?v=3');
