@@ -2,6 +2,8 @@
 const SUPABASE_URL='https://smijqljrxhafvizonqui.supabase.co';
 const SUPABASE_KEY='sb_publishable_RLdYeKWJz2HixpCThdqVTg_TtSmH4H9';
 const PUBLIC_URL='https://duringbbi.github.io/Wedding/';
+const hashParams=new URLSearchParams(location.hash.replace(/^#/,''));
+const arrivedFromInvite=hashParams.get('type')==='invite'||new URLSearchParams(location.search).get('invited')==='1';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -11,7 +13,15 @@ let user=null,memberships=[],weddings=[];
 function setAuthTab(tab){$('loginForm').classList.toggle('hidden',tab!=='login');$('signupForm').classList.toggle('hidden',tab!=='signup');$('showLogin').className='btn '+(tab==='login'?'primary':'ghost');$('showSignup').className='btn '+(tab==='signup'?'primary':'ghost')}
 $('showLogin').onclick=()=>setAuthTab('login');$('showSignup').onclick=()=>setAuthTab('signup');
 $('loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);$('loginStatus').textContent='로그인 중...';const r=await sb.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});if(r.error){$('loginStatus').textContent=r.error.message;return}location.reload()};
-$('signupForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),email=String(f.get('email')).trim(),password=String(f.get('password'));$('signupStatus').textContent='가입 중...';const r=await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://duringbbi.github.io/Wedding/manage/'}});if(r.error){$('signupStatus').textContent=r.error.message;return}if(r.data.session){$('signupStatus').textContent='가입되었습니다. 관리자에게 이 이메일을 전달해 청첩장을 연결해 주세요.';setTimeout(()=>location.reload(),700)}else $('signupStatus').textContent='가입 확인 메일을 보냈습니다. 이메일 인증 후 로그인해 주세요.'};
+$('signupForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),email=String(f.get('email')).trim(),password=String(f.get('password'));$('signupStatus').textContent='가입 중...';const r=await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://duringbbi.github.io/Wedding/manage/'}});if(r.error){$('signupStatus').textContent=r.error.message;return}if(r.data.session){$('signupStatus').textContent='가입되었습니다. 전체관리자가 이 이메일을 청첩장에 연결하면 관리할 수 있습니다.';setTimeout(()=>location.reload(),700)}else $('signupStatus').textContent='가입 확인 메일을 보냈습니다. 이메일 인증 후 로그인해 주세요.'};
+
+function needsPasswordSetup(){return !!(user?.user_metadata?.wedding_id&&user?.user_metadata?.invite_password_set!==true)}
+function updateInviteNotice(){const n=$('inviteNotice');if(!n)return;n.classList.toggle('hidden',!needsPasswordSetup())}
+function openPasswordSetup(){if(!user)return;$('passwordStatus').textContent='';$('passwordForm').reset();$('passwordOverlay').classList.remove('hidden')}
+function closePasswordSetup(){$('passwordOverlay').classList.add('hidden')}
+$('managePassword').onclick=openPasswordSetup;$('passwordCancel').onclick=closePasswordSetup;
+$('passwordOverlay').onclick=e=>{if(e.target===$('passwordOverlay'))closePasswordSetup()};
+$('passwordForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),password=String(f.get('password')||''),confirmPassword=String(f.get('confirm')||''),status=$('passwordStatus'),btn=e.currentTarget.querySelector('button[type="submit"]');if(password.length<8){status.textContent='비밀번호는 8자 이상으로 입력해 주세요.';return}if(password!==confirmPassword){status.textContent='비밀번호가 서로 다릅니다.';return}btn.disabled=true;btn.textContent='저장 중...';status.textContent='';const metadata={...(user?.user_metadata||{}),invite_password_set:true};const r=await sb.auth.updateUser({password,data:metadata});btn.disabled=false;btn.textContent='비밀번호 저장';if(r.error){status.textContent=r.error.message;return}user=r.data.user||user;status.textContent='비밀번호가 설정되었습니다. 다음부터 이메일과 비밀번호로 로그인할 수 있습니다.';updateInviteNotice();if(location.hash)history.replaceState(null,'',location.pathname+location.search);setTimeout(closePasswordSetup,900)};
 
 async function loadAccess(){
   const mr=await sb.from('wedding_members').select('wedding_id,role').eq('user_id',user.id);
@@ -23,7 +33,7 @@ async function loadAccess(){
 }
 function roleFor(id){return memberships.find(x=>x.wedding_id===id)?.role||'editor'}
 function showHome(){
-  $('manageLogin').classList.add('hidden');$('editorHost').innerHTML='';$('manageHome').classList.remove('hidden');$('manageWho').textContent=user.email||'';
+  $('manageLogin').classList.add('hidden');$('editorHost').innerHTML='';$('manageHome').classList.remove('hidden');$('manageWho').textContent=user.email||'';updateInviteNotice();
   const box=$('manageCards');
   if(!weddings.length){box.innerHTML='<div class="manageEmpty">연결된 청첩장이 없습니다.<br><b>'+(esc(user.email||''))+'</b> 이메일을 전체관리자에게 전달해 주세요.</div>';return}
   box.innerHTML=weddings.map(w=>`<article class="manageCard"><div><span class="manageRole">${roleFor(w.id)==='owner'?'소유자':'편집자'}</span></div><h2>${esc(w.groom_name)} ♥ ${esc(w.bride_name)}</h2><div class="manageMeta">${esc(w.wedding_date)} · ${esc(String(w.wedding_time||'').slice(0,5))}<br>${esc(w.venue_name||'')}<br>${w.is_published?'공개 중':'비공개'}</div><div class="manageBtns"><a class="btn primary" href="./?w=${encodeURIComponent(w.slug)}" style="text-decoration:none;color:inherit">청첩장 관리</a><a class="btn ghost" href="${PUBLIC_URL}?w=${encodeURIComponent(w.slug)}" target="_blank" style="text-decoration:none;color:inherit">청첩장 열기</a></div></article>`).join('')
@@ -57,16 +67,17 @@ async function loadEditor(wedding){
   await addScript('../admin/bgm-settings.js?v=2');
 }
 
+async function resolveUser(){let u=(await sb.auth.getUser()).data.user;if(!u&&arrivedFromInvite){await new Promise(r=>setTimeout(r,450));u=(await sb.auth.getUser()).data.user}return u}
 async function init(){
-  user=(await sb.auth.getUser()).data.user;
+  user=await resolveUser();
   if(!user){$('manageLogin').classList.remove('hidden');$('manageHome').classList.add('hidden');return}
   await loadAccess();
   if(selectedSlug){
     const wedding=weddings.find(x=>x.slug===selectedSlug);
-    if(!wedding){$('manageHome').classList.remove('hidden');$('manageWho').textContent=user.email||'';$('manageCards').innerHTML='<div class="manageEmpty">이 계정으로 관리할 수 없는 청첩장입니다.<br><a class="btn ghost" href="./" style="display:inline-block;margin-top:12px;text-decoration:none;color:inherit">내 청첩장으로 돌아가기</a></div>';return}
-    await loadEditor(wedding);return
+    if(!wedding){$('manageHome').classList.remove('hidden');$('manageWho').textContent=user.email||'';$('manageCards').innerHTML='<div class="manageEmpty">이 계정으로 관리할 수 없는 청첩장입니다.<br><a class="btn ghost" href="./" style="display:inline-block;margin-top:12px;text-decoration:none;color:inherit">내 청첩장으로 돌아가기</a></div>';if(arrivedFromInvite||needsPasswordSetup())setTimeout(openPasswordSetup,200);return}
+    await loadEditor(wedding);if(arrivedFromInvite||needsPasswordSetup())setTimeout(openPasswordSetup,250);return
   }
-  showHome()
+  showHome();if(arrivedFromInvite||needsPasswordSetup())setTimeout(openPasswordSetup,250)
 }
 init().catch(e=>{console.error(e);$('manageLogin').classList.remove('hidden');$('loginStatus').textContent=e.message||'관리 페이지를 불러오지 못했습니다.'});
 })();
