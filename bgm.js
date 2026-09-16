@@ -1,10 +1,19 @@
 (()=>{
 const D={volume:.4,loop:true,autoplay:true};
-const OFF_KEY='weddingBgmManualOff';
+const OFF_KEY_PREFIX='weddingBgmManualOff';
+const ADMIN_PREVIEW=window.self!==window.top&&document.referrer.includes('/Wedding/admin/');
 const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
 let currentUrl='',gestureResume=null;
-function getManualOff(){try{return sessionStorage.getItem(OFF_KEY)==='1'}catch{return false}}
-function setManualOff(v){try{if(v)sessionStorage.setItem(OFF_KEY,'1');else sessionStorage.removeItem(OFF_KEY)}catch{}}
+function offKey(){
+  let key='default';
+  try{
+    if(typeof w!=='undefined'&&w?.id)key=w.id;
+    else key=new URLSearchParams(location.search).get('w')||'default';
+  }catch{}
+  return `${OFF_KEY_PREFIX}:${key}`;
+}
+function getManualOff(){try{return sessionStorage.getItem(offKey())==='1'}catch{return false}}
+function setManualOff(v){try{const k=offKey();if(v)sessionStorage.setItem(k,'1');else sessionStorage.removeItem(k)}catch{}}
 function ensureUI(){
   if(document.getElementById('weddingBgm'))return;
   const audio=document.createElement('audio');audio.id='weddingBgm';audio.preload='metadata';audio.setAttribute('playsinline','');
@@ -22,10 +31,12 @@ function unbindGestureResume(){
   gestureResume=null;window.__bgmGestureBound=false;
 }
 async function play(showMessage=false){
+  if(ADMIN_PREVIEW)return false;
   const audio=document.getElementById('weddingBgm');if(!audio?.src||getManualOff())return false;
   try{await audio.play();sync();return true}catch{sync();if(showMessage&&typeof toast==='function')toast('음악 재생을 위해 버튼을 한 번 더 눌러 주세요.');return false}
 }
 function bindGestureResume(){
+  if(ADMIN_PREVIEW)return;
   const audio=document.getElementById('weddingBgm');
   if(!audio||getManualOff()||window.__bgmGestureBound||typeof w==='undefined'||!w||w.bgm_autoplay===false)return;
   window.__bgmGestureBound=true;
@@ -41,6 +52,13 @@ function apply(){
   ensureUI();if(typeof w==='undefined'||!w)return false;
   const audio=document.getElementById('weddingBgm'),btn=document.getElementById('bgmToggle');
   const enabled=w.bgm_enabled===true;const url=w.bgm_url||'';
+  if(ADMIN_PREVIEW){
+    btn.classList.add('hidden');
+    unbindGestureResume();
+    if(!audio.paused)audio.pause();
+    if(currentUrl){audio.removeAttribute('src');audio.load();currentUrl=''}
+    sync();return true;
+  }
   if(!enabled||!url){
     btn.classList.add('hidden');
     unbindGestureResume();
