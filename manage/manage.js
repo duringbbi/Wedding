@@ -21,7 +21,7 @@ function openPasswordSetup(){if(!user)return;$('passwordStatus').textContent='';
 function closePasswordSetup(){$('passwordOverlay').classList.add('hidden')}
 $('managePassword').onclick=openPasswordSetup;$('passwordCancel').onclick=closePasswordSetup;
 $('passwordOverlay').onclick=e=>{if(e.target===$('passwordOverlay'))closePasswordSetup()};
-$('passwordForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),password=String(f.get('password')||''),confirmPassword=String(f.get('confirm')||''),status=$('passwordStatus'),btn=e.currentTarget.querySelector('button[type="submit"]');if(password.length<8){status.textContent='비밀번호는 8자 이상으로 입력해 주세요.';return}if(password!==confirmPassword){status.textContent='비밀번호가 서로 다릅니다.';return}btn.disabled=true;btn.textContent='저장 중...';status.textContent='';const metadata={...(user?.user_metadata||{}),invite_password_set:true};const r=await sb.auth.updateUser({password,data:metadata});btn.disabled=false;btn.textContent='비밀번호 저장';if(r.error){status.textContent=r.error.message;return}user=r.data.user||user;status.textContent='비밀번호가 설정되었습니다. 다음부터 이메일과 비밀번호로 로그인할 수 있습니다.';updateInviteNotice();if(location.hash)history.replaceState(null,'',location.pathname+location.search);setTimeout(closePasswordSetup,900)};
+$('passwordForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget),password=String(f.get('password')||''),confirmPassword=String(f.get('confirm')||''),status=$('passwordStatus'),btn=e.currentTarget.querySelector('button[type="submit"]');if(password.length<8){status.textContent='비밀번호는 8자 이상으로 입력해 주세요.';return}if(password!==confirmPassword){status.textContent='비밀번호가 서로 다릅니다.';return}btn.disabled=true;btn.textContent='저장 중...';status.textContent='';const metadata={...(user?.user_metadata||{}),invite_password_set:true};const r=await sb.auth.updateUser({password,data:metadata});btn.disabled=false;btn.textContent='비밀번호 저장';if(r.error){status.textContent=r.error.message;return}user=r.data.user||user;status.textContent='비밀번호가 설정되었습니다. 다음부터 이메일과 비밀번호로 로그인할 수 있습니다.';updateInviteNotice();setTimeout(closePasswordSetup,900)};
 
 async function loadAccess(){
   const mr=await sb.from('wedding_members').select('wedding_id,role').eq('user_id',user.id);
@@ -71,6 +71,7 @@ async function resolveUser(){let u=(await sb.auth.getUser()).data.user;if(!u&&ar
 async function init(){
   user=await resolveUser();
   if(!user){$('manageLogin').classList.remove('hidden');$('manageHome').classList.add('hidden');return}
+  if(location.hash&&/(?:access_token|refresh_token|type=invite)/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);
   await loadAccess();
   if(selectedSlug){
     const wedding=weddings.find(x=>x.slug===selectedSlug);
