@@ -28,17 +28,18 @@ function render(){
   box.querySelectorAll('[data-role-user]').forEach(s=>s.onchange=()=>changeRole(s.dataset.roleWedding,s.dataset.roleUser,s.value));
 }
 async function functionErrorMessage(error){let msg=error?.message||'초대 메일 발송에 실패했습니다.';try{if(error?.context?.json){const j=await error.context.json();if(j?.error)msg=j.error}}catch{}return msg}
+function showResult(weddingId,message,isWarning=false){const fresh=document.querySelector(`[data-status="${CSS.escape(weddingId)}"]`);if(!fresh)return;fresh.className='status '+(isWarning?'warn':'success');fresh.textContent=message}
 async function sendInvite(weddingId,email,role,status,button){
   status.className='status';status.textContent='초대 메일을 발송하고 있습니다.';if(button){button.disabled=true;button.dataset.oldText=button.textContent;button.textContent='발송 중...'}
   try{
     const {data,error}=await sb.functions.invoke('invite-wedding-customer',{body:{wedding_id:weddingId,email,role}});
     if(error)throw error;if(data?.error)throw new Error(data.error);
-    status.className='status '+(data?.email_sent===false?'warn':'success');status.textContent=data?.message||'초대 메일을 발송했습니다.';
-    await load();return true
-  }catch(error){status.className='status';status.textContent=await functionErrorMessage(error);return false}
-  finally{if(button){button.disabled=false;button.textContent=button.dataset.oldText||'초대메일 발송'}}
+    const message=data?.message||'초대 메일을 발송했습니다.',warn=data?.email_sent===false;
+    await load();showResult(weddingId,message,warn);return true
+  }catch(error){const message=await functionErrorMessage(error);status.className='status';status.textContent=message;return false}
+  finally{if(button?.isConnected){button.disabled=false;button.textContent=button.dataset.oldText||'초대메일 발송'}}
 }
-async function invite(e,weddingId){e.preventDefault();const form=e.currentTarget,f=new FormData(form),email=String(f.get('email')).trim().toLowerCase(),role=String(f.get('role')||'owner'),status=document.querySelector(`[data-status="${CSS.escape(weddingId)}"]`),button=form.querySelector('button[type="submit"]');const ok=await sendInvite(weddingId,email,role,status,button);if(ok)form.reset()}
+async function invite(e,weddingId){e.preventDefault();const form=e.currentTarget,f=new FormData(form),email=String(f.get('email')).trim().toLowerCase(),role=String(f.get('role')||'owner'),status=document.querySelector(`[data-status="${CSS.escape(weddingId)}"]`),button=form.querySelector('button[type="submit"]');const ok=await sendInvite(weddingId,email,role,status,button);if(ok&&form.isConnected)form.reset()}
 async function resend(button){const weddingId=button.dataset.resendWedding,email=button.dataset.resendEmail,role=button.dataset.resendRole||'owner',status=document.querySelector(`[data-status="${CSS.escape(weddingId)}"]`);await sendInvite(weddingId,email,role,status,button)}
 async function remove(weddingId,userId){if(!confirm('이 고객의 청첩장 관리 권한을 해제할까요?'))return;const r=await sb.from('wedding_members').delete().eq('wedding_id',weddingId).eq('user_id',userId);if(r.error)return alert(r.error.message);await load()}
 async function changeRole(weddingId,userId,role){const r=await sb.from('wedding_members').update({role}).eq('wedding_id',weddingId).eq('user_id',userId);if(r.error){alert(r.error.message);await load();return}await load()}
