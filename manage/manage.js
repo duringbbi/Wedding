@@ -10,6 +10,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const selectedSlug=new URLSearchParams(location.search).get('w');
 let user=null,memberships=[],weddings=[];
 
+function setTopNav(visible){const nav=$('manageTopNav');if(nav)nav.classList.toggle('hidden',!visible)}
 function setAuthTab(tab){$('loginForm').classList.toggle('hidden',tab!=='login');$('signupForm').classList.toggle('hidden',tab!=='signup');$('showLogin').className='btn '+(tab==='login'?'primary':'ghost');$('showSignup').className='btn '+(tab==='signup'?'primary':'ghost')}
 $('showLogin').onclick=()=>setAuthTab('login');$('showSignup').onclick=()=>setAuthTab('signup');
 $('loginForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);$('loginStatus').textContent='로그인 중...';const r=await sb.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});if(r.error){$('loginStatus').textContent=r.error.message;return}location.reload()};
@@ -33,7 +34,7 @@ async function loadAccess(){
 }
 function roleFor(id){return memberships.find(x=>x.wedding_id===id)?.role||'editor'}
 function showHome(){
-  $('manageLogin').classList.add('hidden');$('editorHost').innerHTML='';$('manageHome').classList.remove('hidden');$('manageWho').textContent=user.email||'';updateInviteNotice();
+  setTopNav(true);$('manageLogin').classList.add('hidden');$('editorHost').innerHTML='';$('manageHome').classList.remove('hidden');$('manageWho').textContent=user.email||'';updateInviteNotice();
   const box=$('manageCards');
   if(!weddings.length){box.innerHTML='<div class="manageEmpty">연결된 청첩장이 없습니다.<br><b>'+(esc(user.email||''))+'</b> 이메일을 전체관리자에게 전달해 주세요.</div>';return}
   box.innerHTML=weddings.map(w=>`<article class="manageCard"><div><span class="manageRole">${roleFor(w.id)==='owner'?'소유자':'편집자'}</span></div><h2>${esc(w.groom_name)} ♥ ${esc(w.bride_name)}</h2><div class="manageMeta">${esc(w.wedding_date)} · ${esc(String(w.wedding_time||'').slice(0,5))}<br>${esc(w.venue_name||'')}<br>${w.is_published?'공개 중':'비공개'}</div><div class="manageBtns"><a class="btn primary" href="./?w=${encodeURIComponent(w.slug)}" style="text-decoration:none;color:inherit">청첩장 관리</a><a class="btn ghost" href="${PUBLIC_URL}?w=${encodeURIComponent(w.slug)}" target="_blank" style="text-decoration:none;color:inherit">청첩장 열기</a></div></article>`).join('')
@@ -42,15 +43,16 @@ $('manageRefresh').onclick=async()=>{await loadAccess();showHome()};$('manageLog
 
 function addScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.body.appendChild(s)})}
 async function loadEditor(wedding){
-  $('manageHome').classList.add('hidden');$('manageLogin').classList.add('hidden');
+  setTopNav(true);$('manageHome').classList.add('hidden');$('manageLogin').classList.add('hidden');
   if(!document.getElementById('login')){const dummy=document.createElement('div');dummy.id='login';dummy.className='hidden';document.body.appendChild(dummy)}
-  const html=await fetch('../admin/index.html?v=3',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('관리 화면을 불러오지 못했습니다.');return r.text()});
+  const html=await fetch('../admin/index.html?v=4',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('관리 화면을 불러오지 못했습니다.');return r.text()});
   const doc=new DOMParser().parseFromString(html,'text/html'),source=doc.getElementById('app');if(!source)throw Error('관리 화면 구조를 찾지 못했습니다.');
   const host=$('editorHost');host.innerHTML='';const app=source.cloneNode(true);host.appendChild(app);
   app.classList.remove('hidden');
   const title=app.querySelector('.top h1');if(title)title.textContent='내 청첩장 관리';
   const actions=app.querySelector('.top .actions');
-  const openLink=actions?.querySelector('a');if(openLink)openLink.href=PUBLIC_URL+'?w='+encodeURIComponent(wedding.slug);
+  const userManageLink=[...(actions?.querySelectorAll('a')||[])].find(a=>a.textContent.trim()==='사용자 관리');if(userManageLink)userManageLink.remove();
+  const openLink=[...(actions?.querySelectorAll('a')||[])].find(a=>a.textContent.trim()==='청첩장 열기');if(openLink)openLink.href=PUBLIC_URL+'?w='+encodeURIComponent(wedding.slug);
   if(actions){const back=document.createElement('a');back.className='btn ghost manageBack';back.href='./';back.textContent='내 청첩장 목록';back.style.textDecoration='none';back.style.color='inherit';actions.prepend(back)}
   const frame=app.querySelector('#previewFrame');if(frame)frame.src=PUBLIC_URL+'?w='+encodeURIComponent(wedding.slug);
   let src=await fetch('../admin/app.js?v=2',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('편집기 코드를 불러오지 못했습니다.');return r.text()});
@@ -70,15 +72,15 @@ async function loadEditor(wedding){
 async function resolveUser(){let u=(await sb.auth.getUser()).data.user;if(!u&&arrivedFromInvite){await new Promise(r=>setTimeout(r,450));u=(await sb.auth.getUser()).data.user}return u}
 async function init(){
   user=await resolveUser();
-  if(!user){$('manageLogin').classList.remove('hidden');$('manageHome').classList.add('hidden');return}
+  if(!user){setTopNav(false);$('manageLogin').classList.remove('hidden');$('manageHome').classList.add('hidden');return}
   if(location.hash&&/(?:access_token|refresh_token|type=invite)/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);
   await loadAccess();
   if(selectedSlug){
     const wedding=weddings.find(x=>x.slug===selectedSlug);
-    if(!wedding){$('manageHome').classList.remove('hidden');$('manageWho').textContent=user.email||'';$('manageCards').innerHTML='<div class="manageEmpty">이 계정으로 관리할 수 없는 청첩장입니다.<br><a class="btn ghost" href="./" style="display:inline-block;margin-top:12px;text-decoration:none;color:inherit">내 청첩장으로 돌아가기</a></div>';if(arrivedFromInvite||needsPasswordSetup())setTimeout(openPasswordSetup,200);return}
+    if(!wedding){setTopNav(true);$('manageHome').classList.remove('hidden');$('manageWho').textContent=user.email||'';$('manageCards').innerHTML='<div class="manageEmpty">이 계정으로 관리할 수 없는 청첩장입니다.<br><a class="btn ghost" href="./" style="display:inline-block;margin-top:12px;text-decoration:none;color:inherit">내 청첩장으로 돌아가기</a></div>';if(arrivedFromInvite||needsPasswordSetup())setTimeout(openPasswordSetup,200);return}
     await loadEditor(wedding);if(arrivedFromInvite||needsPasswordSetup())setTimeout(openPasswordSetup,250);return
   }
   showHome();if(arrivedFromInvite||needsPasswordSetup())setTimeout(openPasswordSetup,250)
 }
-init().catch(e=>{console.error(e);$('manageLogin').classList.remove('hidden');$('loginStatus').textContent=e.message||'관리 페이지를 불러오지 못했습니다.'});
+init().catch(e=>{console.error(e);setTopNav(false);$('manageLogin').classList.remove('hidden');$('loginStatus').textContent=e.message||'관리 페이지를 불러오지 못했습니다.'});
 })();
