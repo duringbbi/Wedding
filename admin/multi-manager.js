@@ -8,7 +8,7 @@ function addScript(src){return new Promise((resolve,reject)=>{const s=document.c
 
 async function loadEditor(slug){
   const safe=/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)?slug:'taehyung-chaeyeon';
-  const openLink=document.querySelector('#app>.top .actions a');
+  const openLink=[...document.querySelectorAll('#app>.top .actions a')].find(a=>a.textContent.trim()==='청첩장 열기');
   if(openLink)openLink.href=PUBLIC_URL+'?w='+encodeURIComponent(safe);
   const actions=document.querySelector('#app>.top .actions');
   if(actions&&!document.getElementById('backToDashboard')){
@@ -44,7 +44,7 @@ async function initDashboard(){
 
   function renderShell(){
     document.getElementById('dashboardApp')?.remove();
-    const root=document.createElement('div');root.id='dashboardApp';root.className='dashboardWrap';root.innerHTML=`<div class="dashboardHead"><div><h1>청첩장 관리</h1><div class="note">여러 커플의 청첩장을 한 곳에서 생성하고 관리합니다. · ${escapeHtml(user.email||'')}</div></div><div class="dashboardActions"><button id="dashNew" class="btn primary">+ 새 청첩장</button><button id="dashRefresh" class="btn ghost">새로고침</button><button id="dashLogout" class="btn ghost">로그아웃</button></div></div><div id="dashStats" class="dashStats"></div><div class="dashTools"><b>청첩장 목록</b><label class="note"><input id="showArchived" type="checkbox"> 보관된 청첩장 보기</label></div><div id="weddingCards" class="weddingCards"><div class="dashEmpty">불러오는 중...</div></div>`;document.body.appendChild(root);
+    const root=document.createElement('div');root.id='dashboardApp';root.className='dashboardWrap';root.innerHTML=`<div class="dashboardHead"><div><h1>전체 관리자</h1><div class="note">여러 커플의 청첩장을 한 곳에서 생성하고 관리합니다. · ${escapeHtml(user.email||'')}</div></div><div class="dashboardActions"><a class="btn ghost" href="./access/" style="text-decoration:none;color:inherit">사용자 관리</a><button id="dashNew" class="btn primary">+ 새 청첩장</button><button id="dashRefresh" class="btn ghost">새로고침</button><button id="dashLogout" class="btn ghost">로그아웃</button></div></div><div id="dashStats" class="dashStats"></div><div class="dashTools"><b>청첩장 목록</b><label class="note"><input id="showArchived" type="checkbox"> 보관된 청첩장 보기</label></div><div id="weddingCards" class="weddingCards"><div class="dashEmpty">불러오는 중...</div></div>`;document.body.appendChild(root);
     document.getElementById('dashNew').onclick=()=>openForm();
     document.getElementById('dashRefresh').onclick=loadAll;
     document.getElementById('dashLogout').onclick=async()=>{await sb.auth.signOut();location.reload()};
