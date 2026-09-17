@@ -16,3 +16,4 @@ async function remove(){if(typeof owner==='undefined'||!owner||!w)return;if(!w.b
 function init(){panel();['bgmEnabled','bgmAutoplay','bgmLoop','bgmVolume'].forEach(id=>$b(id).addEventListener('input',preview));$b('bgmSave').onclick=save;$b('bgmUpload').onclick=upload;$b('bgmRemove').onclick=remove;let tries=0;const t=setInterval(()=>{if(fill()||++tries>120)clearInterval(t)},100)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
+(()=>{if(document.getElementById('backgroundSettingsLoader'))return;const s=document.createElement('script');s.id='backgroundSettingsLoader';s.src=new URL('./background-settings.js?v=1',document.currentScript?.src||location.href).href;document.body.appendChild(s)})();
