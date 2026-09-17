@@ -1,4 +1,5 @@
 (()=>{
+if(window.__backgroundSettingsLoaded)return;window.__backgroundSettingsLoaded=true;
 const DEFAULT='#fffdf9';
 const HEX=/^#[0-9a-f]{6}$/i;
 const $=id=>document.getElementById(id);
@@ -30,9 +31,10 @@ function panel(){
   if($('backgroundThemePanel'))return;
   const p=document.createElement('section');p.id='backgroundThemePanel';p.className='panel backgroundThemePanel';
   p.innerHTML=`<h2>청첩장 배경색</h2><div class="note">기본 콘텐츠 영역의 배경색을 변경합니다. 갤러리·RSVP·방명록의 보조 배경색은 가독성을 위해 유지됩니다.</div><div id="backgroundThemePreview" class="backgroundPreview">실시간 배경색 미리보기</div><div class="backgroundColorRow"><div class="field"><label>색상</label><input id="backgroundColorPicker" type="color" value="${DEFAULT}"></div><div class="field"><label>HEX</label><input id="backgroundColorHex" type="text" value="${DEFAULT.toUpperCase()}" maxlength="7" placeholder="#FFFDF9"></div><div class="backgroundHelp guide">예: #FFFDF9 · 6자리 HEX 형식</div></div><div class="backgroundThemeBtns"><button id="backgroundReset" class="btn ghost" type="button">기본색으로 복원</button><button id="backgroundSave" class="btn primary" type="button">배경색 저장</button></div><div id="backgroundThemeStatus" class="status"></div>`;
+  const bgm=document.querySelector('.bgmPanel');
   const effect=document.querySelector('.heroEffectPanel');
   const mainImage=document.querySelector('.panel .imagebox')?.closest('.panel');
-  if(effect)effect.before(p);else if(mainImage)mainImage.before(p);else document.getElementById('app')?.appendChild(p);
+  if(bgm)bgm.before(p);else if(effect)effect.before(p);else if(mainImage)mainImage.before(p);else document.getElementById('app')?.appendChild(p);
 }
 function fill(){
   if(!window.w)return false;
