@@ -6,7 +6,16 @@ const STROKES=[
   'M319 33 C329 27 342 24 352 19 C361 15 365 9 361 6 C356 2 347 5 339 12 C330 20 322 29 320 37 C317 47 324 54 335 56 C352 59 374 54 395 45'
 ];
 const D={top:-18,left:-6,width:112,duration:3.4};
+const DEFAULT_BG='#fffdf9';
 const n=(v,d)=>Number.isFinite(Number(v))?Number(v):d;
+const validColor=v=>/^#[0-9a-f]{6}$/i.test(String(v||''))?String(v):DEFAULT_BG;
+function applyBackground(data){
+  if(!data)return false;
+  const color=validColor(data.background_color);
+  document.documentElement.style.setProperty('--wedding-bg',color);
+  const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',color);
+  return true;
+}
 function shape(){
   const svg=document.querySelector('.heroHandwriting svg');
   if(!svg)return false;
@@ -17,6 +26,7 @@ function shape(){
 function apply(){
   shape();
   if(typeof w==='undefined'||!w)return false;
+  applyBackground(w);
   const el=document.querySelector('.heroHandwriting');
   if(!el)return false;
   el.style.display=w.hero_effect_enabled===false?'none':'block';
@@ -26,7 +36,9 @@ function apply(){
   el.style.setProperty('--hero-duration',n(w.hero_effect_duration_s,D.duration)+'s');
   return true;
 }
+window.addEventListener('wedding:data-ready',e=>applyBackground(e.detail?.wedding));
 shape();
+if(window.w)applyBackground(window.w);
 let tries=0;
 const t=setInterval(()=>{if(apply()||++tries>100)clearInterval(t)},100);
 })();
